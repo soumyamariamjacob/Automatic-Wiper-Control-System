@@ -1,0 +1,59 @@
+#define RAIN_SENSOR_PIN A0      // Pin connected to rain sensor analog output
+#define MOTOR_SPEED_PIN 5       // PWM pin connected to motor driver ENA
+#define MOTOR_DIR_PIN1 2        // Motor direction pin 1 (IN1)
+#define MOTOR_DIR_PIN2 3        // Motor direction pin 2 (IN2)
+#define MANUAL_SWITCH_PIN 6     // Pin connected to manual override switch
+
+void setup() {
+  pinMode(MOTOR_SPEED_PIN, OUTPUT);
+  pinMode(MOTOR_DIR_PIN1, OUTPUT);
+  pinMode(MOTOR_DIR_PIN2, OUTPUT);
+  pinMode(MANUAL_SWITCH_PIN, INPUT_PULLUP); // Internal pull-up for manual switch
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  int rainValue = analogRead(RAIN_SENSOR_PIN);
+  bool manualOverride = digitalRead(MANUAL_SWITCH_PIN) == LOW;
+
+  if (manualOverride) {
+    // Manual override: full speed
+    setWiperSpeed(255);
+    Serial.println("Manual Override: Full Speed");
+  } else {
+    // Automatic control
+    if (rainValue > 800) {
+      // Heavy rain: full speed
+      setWiperSpeed(255);
+      Serial.println("Heavy Rain: Full Speed");
+    } else if (rainValue > 500) {
+      // Moderate rain: medium speed
+      setWiperSpeed(180);
+      Serial.println("Moderate Rain: Medium Speed");
+    } else if (rainValue > 200) {
+      // Light rain: slow speed
+      setWiperSpeed(100);
+      Serial.println("Light Rain: Slow Speed");
+    } else {
+      // No rain: stop wipers
+      setWiperSpeed(0);
+      Serial.println("No Rain: Wipers Stopped");
+    }
+  }
+
+  delay(100);  // Adjust delay for smoother operation
+}
+
+void setWiperSpeed(int speed) {
+  analogWrite(MOTOR_SPEED_PIN, speed);
+  if (speed > 0) {
+    // Set motor direction for wiper operation
+    digitalWrite(MOTOR_DIR_PIN1, HIGH);
+    digitalWrite(MOTOR_DIR_PIN2, LOW);
+  } else {
+    // Stop the motor
+    digitalWrite(MOTOR_DIR_PIN1, LOW);
+    digitalWrite(MOTOR_DIR_PIN2, LOW);
+  }
+}
